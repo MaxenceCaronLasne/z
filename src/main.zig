@@ -1,6 +1,7 @@
 const arch = @import("./arch.zig");
 const console = @import("./console.zig");
 const serial = @import("./serial.zig");
+const gdt = @import("./gdt.zig");
 
 const ALIGN = 1 << 0;
 const MEMINFO = 1 << 1;
@@ -43,6 +44,10 @@ fn kmain() callconv(.C) void {
     };
 
     sp.write("hello world!\r\n");
+
+    gdt.init();
+
+    sp.write("hello from protected!\r\n");
 
     while (true) {
         arch.halt();
