@@ -1,5 +1,6 @@
+const arch = @import("./arch.zig");
 const console = @import("./console.zig");
-// const serial = @import("./serial.zig");
+const serial = @import("./serial.zig");
 
 const ALIGN = 1 << 0;
 const MEMINFO = 1 << 1;
@@ -35,15 +36,15 @@ fn kmain() callconv(.C) void {
     console.initialize();
     console.puts("Hello Zig Kernel!");
 
-    // const sp = serial.init(38400, serial.Port.COM1) catch |err| {
-    //     console.puts("Failed to initialize serial port: ");
-    //     console.puts(@errorName(err));
-    //     return;
-    // };
+    const sp = serial.init(38400, serial.Port.COM1) catch |err| {
+        console.puts("Failed to initialize serial port: ");
+        console.puts(@errorName(err));
+        return;
+    };
 
-    // sp.write("hello world!\r\n");
+    sp.write("hello world!\r\n");
 
     while (true) {
-        asm volatile ("hlt");
+        arch.halt();
     }
 }
