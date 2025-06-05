@@ -94,45 +94,46 @@ const GdtPtr = packed struct {
     base: u32,
 };
 
-var gdt_ptr: GdtPtr = GdtPtr{
-    .limit = GDT.len * @sizeOf(SegmentDescriptor) - 1,
-    .base = undefined,
-};
-
 const SegmentSelector = packed struct(u16) {
     privilege_level: u2 = 0,
     table: Table = Table.GDT,
     index: u13,
 
-    const Table = enum(u1) {
-        GDT,
-        LDT,
-    };
+    const Table = enum(u1) { GDT, LDT };
 };
 
 pub fn init() void {
-    gdt_ptr.base = @intFromPtr(&GDT[0]);
+    var gdt_ptr: GdtPtr = GdtPtr{
+        .limit = GDT.len * @sizeOf(SegmentDescriptor) - 1,
+        .base = @intFromPtr(&GDT),
+    };
 
-    // Load the GDT
     asm volatile ("lgdt (%[gdt_ptr])"
         :
         : [gdt_ptr] "r" (&gdt_ptr),
         : "memory"
     );
 
-    // Reload all segment registers with proper data segment selector (0x10)
+    const code_selector: u16 = comptime @bitCast(SegmentSelector{ .index = 1 }); // Index 1 = code segment
+    const data_selector: u16 = comptime @bitCast(SegmentSelector{ .index = 2 }); // Index 2 = data segment
+
     asm volatile (
-        \\movw $0x10, %%ax
+        \\movw %[data_sel], %%ax
         \\movw %%ax, %%ds
         \\movw %%ax, %%es
         \\movw %%ax, %%fs
         \\movw %%ax, %%gs
         \\movw %%ax, %%ss
-        ::: "ax", "memory");
+        :
+        : [data_sel] "r" (data_selector),
+        : "ax", "memory"
+    );
 
-    // Far jump to reload CS register with code segment selector (0x08)
     asm volatile (
-        \\ljmp $0x08, $reload_cs
+        \\ljmp %[code_sel], $reload_cs
         \\reload_cs:
-        ::: "memory");
+        :
+        : [code_sel] "n" (code_selector),
+        : "memory"
+    );
 }
