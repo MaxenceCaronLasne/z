@@ -1,27 +1,14 @@
 const arch = @import("./arch.zig");
 
 const GDT: [3]SegmentDescriptor = .{
-    // Null descriptor - must be all zeros
-    SegmentDescriptor{
-        .limit_low = 0,
-        .base_address_low = 0,
-        .segment_type = SegmentDescriptor.SegmentType.ReadOnly,
-        .descriptor_type = SegmentDescriptor.DescriptorType.System,
-        .privilege_level = 0,
-        .is_present = false,
-        .limit_high = 0,
-        .reserved_zero = 0,
-        .default_operation_size = SegmentDescriptor.OperationSize.Seg16Bits,
-        .granularity = 0,
-        .base_address_high = 0,
-    },
-    SegmentDescriptor.build(
+    SegmentDescriptor.Zero(),
+    SegmentDescriptor.Build(
         0,
         0xFFFFF,
         SegmentDescriptor.SegmentType.ExecuteRead,
         0,
     ),
-    SegmentDescriptor.build(
+    SegmentDescriptor.Build(
         0,
         0xFFFFF,
         SegmentDescriptor.SegmentType.ReadWrite,
@@ -42,11 +29,15 @@ const SegmentDescriptor = packed struct(u64) {
     granularity: u1 = 1,
     base_address_high: u8,
 
-    fn build(
-        base: u32,
-        limit: u20,
-        segment_type: SegmentType,
-        privilege_level: u2,
+    fn Zero() SegmentDescriptor {
+        return @as(SegmentDescriptor, @bitCast(@as(u64, 0x0)));
+    }
+
+    fn Build(
+        comptime base: u32,
+        comptime limit: u20,
+        comptime segment_type: SegmentType,
+        comptime privilege_level: u2,
     ) SegmentDescriptor {
         return SegmentDescriptor{
             .limit_low = @truncate(limit),
