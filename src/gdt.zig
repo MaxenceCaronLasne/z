@@ -93,11 +93,13 @@ const SegmentSelector = packed struct(u16) {
     const Table = enum(u1) { GDT, LDT };
 };
 
+var gdt_ptr: GdtPtr = GdtPtr{
+    .limit = GDT.len * @sizeOf(SegmentDescriptor) - 1,
+    .base = undefined,
+};
+
 pub fn init() void {
-    var gdt_ptr: GdtPtr = GdtPtr{
-        .limit = GDT.len * @sizeOf(SegmentDescriptor) - 1,
-        .base = @intFromPtr(&GDT),
-    };
+    gdt_ptr.base = @intFromPtr(&GDT);
 
     asm volatile ("lgdt (%[gdt_ptr])"
         :

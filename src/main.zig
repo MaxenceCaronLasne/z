@@ -2,6 +2,8 @@ const arch = @import("./arch.zig");
 const console = @import("./console.zig");
 const serial = @import("./serial.zig");
 const gdt = @import("./gdt.zig");
+const idt = @import("./idt.zig");
+const interrupt = @import("./interrupt.zig");
 
 const ALIGN = 1 << 0;
 const MEMINFO = 1 << 1;
@@ -46,8 +48,18 @@ fn kmain() callconv(.C) void {
     sp.write("hello world!\r\n");
 
     gdt.init();
+    var idt_manager = idt.init();
+
+    idt_manager.addInterruptGate(3, interrupt.getHandler()) catch |err| {
+        sp.write("Failed to open interrupt gate: ");
+        sp.write(@errorName(err));
+        sp.write("\r\n");
+    };
 
     sp.write("hello from protected!\r\n");
+
+    arch.breakpoint();
+    sp.write("hello from after the breakpoint!\r\n");
 
     while (true) {
         arch.halt();

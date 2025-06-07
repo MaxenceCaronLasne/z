@@ -1,5 +1,33 @@
+/// CPU state structure containing all i386 registers
+pub const CpuState = struct {
+    // General-purpose registers (32-bit)
+    eax: u32,
+    ebx: u32,
+    ecx: u32,
+    edx: u32,
+
+    // Index and pointer registers
+    esi: u32,
+    edi: u32,
+    esp: u32,
+    ebp: u32,
+
+    // Flags register
+    eflags: u32,
+
+    // Segment registers (16-bit)
+    ds: u16,
+    es: u16,
+    fs: u16,
+    gs: u16,
+};
+
 pub fn halt() void {
     asm volatile ("hlt");
+}
+
+pub fn breakpoint() void {
+    asm volatile ("int $3");
 }
 
 pub fn in(comptime Type: type, port: u16) Type {
