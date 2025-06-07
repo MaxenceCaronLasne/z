@@ -59,38 +59,43 @@ const LSR = packed struct(u8) {
 pub const SerialPort = struct {
     port: Port,
 
-    fn transmitIsEmpty(self: *const SerialPort) bool {
+    fn transmitIsEmpty(self: SerialPort) bool {
         const lsr: LSR = @bitCast(arch.in(u8, @intFromEnum(self.port) + LSR.portOffset));
         return lsr.is_transmitter_holding_register_empty;
     }
 
-    fn putc(self: *const SerialPort, char: u8) void {
-        while (!self.transmitIsEmpty()) {
+    fn putc(self: SerialPort, char: u8) void {
+        var retries: u32 = 10000;
+        while (!self.transmitIsEmpty() and retries > 0) : (retries -= 1) {
             arch.halt();
         }
+        if (retries <= 0) {
+            return;
+        }
+
         arch.out(@intFromEnum(self.port), char);
     }
 
-    pub fn write(self: *const SerialPort, string: [:0]const u8) void {
+    pub fn write(self: SerialPort, string: [:0]const u8) void {
         for (string) |c| {
             self.putc(c);
         }
     }
 
     // Write a slice of bytes (without null termination requirement)
-    pub fn writeBytes(self: *const SerialPort, bytes: []const u8) void {
+    pub fn writeBytes(self: SerialPort, bytes: []const u8) void {
         for (bytes) |c| {
             self.putc(c);
         }
     }
 
     // Write a single character
-    pub fn writeChar(self: *const SerialPort, char: u8) void {
+    pub fn writeChar(self: SerialPort, char: u8) void {
         self.putc(char);
     }
 
     // Format and write an unsigned integer
-    fn writeUint(self: *const SerialPort, value: u64, base: u8) void {
+    fn writeUint(self: SerialPort, value: u64, base: u8) void {
         if (value == 0) {
             self.putc('0');
             return;
@@ -116,7 +121,7 @@ pub const SerialPort = struct {
     }
 
     // Format and write a signed integer
-    fn writeInt(self: *const SerialPort, value: i64, base: u8) void {
+    fn writeInt(self: SerialPort, value: i64, base: u8) void {
         if (value < 0) {
             self.putc('-');
             self.writeUint(@as(u64, @intCast(-value)), base);
@@ -126,14 +131,14 @@ pub const SerialPort = struct {
     }
 
     // Format and write a pointer
-    fn writePointer(self: *const SerialPort, ptr: anytype) void {
+    fn writePointer(self: SerialPort, ptr: anytype) void {
         const addr = @intFromPtr(ptr);
         self.writeBytes("0x");
         self.writeUint(addr, 16);
     }
 
     // Format and write a boolean
-    fn writeBool(self: *const SerialPort, value: bool) void {
+    fn writeBool(self: SerialPort, value: bool) void {
         if (value) {
             self.writeBytes("true");
         } else {
@@ -142,7 +147,7 @@ pub const SerialPort = struct {
     }
 
     // Helper function to format a single argument
-    fn formatArg(self: *const SerialPort, arg: anytype, format_type: enum { default, hex, decimal }) void {
+    fn formatArg(self: SerialPort, arg: anytype, format_type: enum { default, hex, decimal }) void {
         const T = @TypeOf(arg);
         switch (@typeInfo(T)) {
             .int => |int_info| {
@@ -232,7 +237,7 @@ pub const SerialPort = struct {
     /// sp.print("Value: {}, Hex: 0x{x}\r\n", .{42, 42});
     /// sp.print("Address: 0x{x}\r\n", .{@intFromPtr(&some_var)});
     /// ```
-    pub fn print(self: *const SerialPort, comptime fmt: []const u8, args: anytype) void {
+    pub fn print(self: SerialPort, comptime fmt: []const u8, args: anytype) void {
         const ArgsType = @TypeOf(args);
         const args_type_info = @typeInfo(ArgsType);
 

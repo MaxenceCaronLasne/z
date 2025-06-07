@@ -54,7 +54,12 @@ var idtPtr = IdtPtr{
 pub const InterruptHandler = fn () callconv(.naked) void;
 
 pub const Interrupt = struct {
-    pub fn addInterruptGate(_: *@This(), index: usize, handler: InterruptHandler) InterruptError!void {
+    pub fn addInterruptGate(
+        _: *@This(),
+        comptime index: usize,
+        comptime handler: InterruptHandler,
+        comptime segment_index: u16,
+    ) InterruptError!void {
         if (index >= numberOfEntries) {
             return InterruptError.OutOfRange;
         }
@@ -63,11 +68,9 @@ pub const Interrupt = struct {
             return InterruptError.AlreadyPresent;
         }
 
-        const segment_selector = 1 * 8;
-
         IDT[index] = InterruptGate.Make(
             @intFromPtr(&handler),
-            segment_selector,
+            segment_index * 8,
             0,
         );
     }
