@@ -50,7 +50,7 @@ fn kmain() callconv(.C) void {
     gdt.init();
     var idt_manager = idt.init();
 
-    idt_manager.addInterruptGate(3, interrupt.getHandler()) catch |err| {
+    idt_manager.addInterruptGate(3, interrupt.getHandler(interrupt.breakpointHandler)) catch |err| {
         sp.print("Failed to add interrupt gate: {}\r\n", .{@errorName(err)});
     };
 
