@@ -45,21 +45,20 @@ fn kmain() callconv(.C) void {
         return;
     };
 
-    sp.write("hello world!\r\n");
+    sp.print("Serial Port Initialized!\r\n", .{});
 
     gdt.init();
     var idt_manager = idt.init();
 
     idt_manager.addInterruptGate(3, interrupt.getHandler()) catch |err| {
-        sp.write("Failed to open interrupt gate: ");
-        sp.write(@errorName(err));
-        sp.write("\r\n");
+        sp.print("Failed to add interrupt gate: {}\r\n", .{@errorName(err)});
     };
 
-    sp.write("hello from protected!\r\n");
+    sp.print("hello from protected!\r\n", .{});
 
     arch.breakpoint();
-    sp.write("hello from after the breakpoint!\r\n");
+
+    sp.print("hello from after the breakpoint!\r\n", .{});
 
     while (true) {
         arch.halt();
