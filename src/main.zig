@@ -39,13 +39,13 @@ fn kmain() callconv(.C) void {
     console.initialize();
     console.puts("Hello Zig Kernel!");
 
-    const sp = serial.init(38400, serial.Port.COM1) catch |err| {
+    var sp = serial.init(38400, serial.Port.COM1) catch |err| {
         console.puts("Failed to initialize serial port: ");
         console.puts(@errorName(err));
         return;
     };
 
-    sp.print("Serial Port Initialized!\r\n", .{});
+    sp.printf("Serial Port Initialized!\r\n", .{});
 
     gdt.init();
     var idt_manager = idt.init();
@@ -55,14 +55,14 @@ fn kmain() callconv(.C) void {
         interrupt.getHandler(interrupt.breakpointHandler),
         1,
     ) catch |err| {
-        sp.print("Failed to add interrupt gate: {}\r\n", .{@errorName(err)});
+        sp.printf("Failed to add interrupt gate: {s}\r\n", .{@errorName(err)});
     };
 
-    sp.print("hello from protected!\r\n", .{});
+    sp.printf("hello from protected!\r\n", .{});
 
     arch.breakpoint();
 
-    sp.print("hello from after the breakpoint!\r\n", .{});
+    sp.printf("hello from after the breakpoint!\r\n", .{});
 
     while (true) {
         arch.halt();

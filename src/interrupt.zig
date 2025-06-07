@@ -28,6 +28,6 @@ pub fn getHandler(comptime handler: fn () void) idt.InterruptHandler {
 }
 
 pub fn breakpointHandler() void {
-    const sp = serial.attach(serial.Port.COM1);
-    sp.print("Interrupt occurred!\r\n", .{});
+    var sp = serial.attach(serial.Port.COM1);
+    sp.printf("Interrupt occurred!\r\n", .{});
 }
