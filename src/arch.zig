@@ -25,6 +25,10 @@ pub fn breakpoint() void {
     asm volatile ("int $3");
 }
 
+pub fn syscall() void {
+    asm volatile ("int $0x80");
+}
+
 pub fn in(comptime Type: type, port: u16) Type {
     return switch (Type) {
         u8 => asm volatile ("inb %[port], %[result]"

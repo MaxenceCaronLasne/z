@@ -58,9 +58,18 @@ fn kmain() callconv(.C) void {
         sp.printf("Failed to add interrupt gate: {s}\r\n", .{@errorName(err)});
     };
 
+    idt_manager.addInterruptGate(
+        0x80,
+        interrupt.getHandler(interrupt.syscallHandler),
+        1,
+    ) catch |err| {
+        sp.printf("Failed to add syscall gate: {s}\r\n", .{@errorName(err)});
+    };
+
     sp.printf("hello from protected!\r\n", .{});
 
     arch.breakpoint();
+    arch.syscall();
 
     sp.printf("hello from after the breakpoint!\r\n", .{});
 
