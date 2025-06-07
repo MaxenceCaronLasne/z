@@ -308,3 +308,7 @@ pub fn init(baud: u32, port: Port) SerialError!SerialPort {
 
     return SerialPort{ .port = port };
 }
+
+pub fn attach(port: Port) SerialPort {
+    return SerialPort{ .port = port };
+}
